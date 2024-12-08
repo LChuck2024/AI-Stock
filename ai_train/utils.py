@@ -3,6 +3,7 @@ import joblib
 import streamlit as st
 import yfinance as yf
 import os
+import pandas as pd
 
 stock_info_sh_df = st.session_state.stock_info_sh_df
 stock_info_sz_df = st.session_state.stock_info_sz_df
@@ -22,7 +23,7 @@ def get_ticker(ticker):
         ticker = ticker + '.SZ'
     else:
         ticker = None
-    return ticker,stock_info
+    return ticker, stock_info
 
 
 def get_data(ticker, period='max', interval='1d'):
@@ -42,9 +43,10 @@ def get_data(ticker, period='max', interval='1d'):
     return ticker_info_src
 
 
-def build_data(ticker, data, build_col):
+def build_data(ticker, data, category='build'):
+    build_col = [3, 5, 10, 15, 30, 60, 90, 120, 180, 240, 360, 480, 720]
     # 如果文件已存在，则直接跳过
-    if os.path.exists(f'data/build/{ticker}_ticker_info_build.pkl') and joblib.load(f'data/build/{ticker}_ticker_info_build.pkl') is not None:
+    if os.path.exists(f'data/{category}/{ticker}_ticker_info_build.pkl') and joblib.load(f'data/{category}/{ticker}_ticker_info_build.pkl') is not None:
         print('数据集已存在')
         return joblib.load(f'data/build/{ticker}_ticker_info_build.pkl')
     # for i in (3, 5, 10, 15, 30, 60, 90, 120, 180, 240, 360, 480, 720):
@@ -63,11 +65,22 @@ def build_data(ticker, data, build_col):
             data[f'{col}_std_{i}'] = data[col].rolling(i).std()
             # print(f'生成{i}天列{col}中位数数据...')
             data[f'{col}_median_{i}'] = data[col].rolling(i).median()
-
+    # 增加日期对应的星期列
+    data['trans_date'] = data.index.weekday
     print('完成构建数据集')
     # 如果目录不存在则创建
     if not os.path.exists('data/build/'):
         os.makedirs('data/build/')
     # 保存文件
-    joblib.dump(data, f'data/build/{ticker}_ticker_info_build.pkl')
+    joblib.dump(data, f'data/{category}/{ticker}_ticker_info_build.pkl')
     return data
+
+
+def get_last_workday(date):
+    """获取指定日期的上一个工作日"""
+    return date - pd.offsets.BDay(1)
+
+
+def get_next_workday(date):
+    """获取指定日期的下一个工作日"""
+    return date + pd.offsets.BDay(1)

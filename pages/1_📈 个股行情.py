@@ -2,7 +2,7 @@ import datetime
 import streamlit as st
 import yfinance as yf
 import plotly.graph_objects as go
-from ai_train import get_stock_data
+from ai_train import utils
 
 st.set_page_config(page_title='📈 个股行情', page_icon='📈', layout='wide')
 st.header('🔍 个股预测')
@@ -62,7 +62,7 @@ if ticker == '':
     st.write('你没有输入股票代码，请输入股票代码！')
     exit()
 else:
-    ticker, stock_info = get_stock_data.get_ticker(ticker)
+    ticker, stock_info = utils.get_ticker(ticker)
     if ticker is None:
         st.write('你输入的股票代码有误，请重新输入！')
         exit()
