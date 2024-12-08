@@ -40,7 +40,7 @@ with col4:
 
 # 获取当前日期的下一个工作日，跳过星期六星期天
 current_date_dt = pd.to_datetime(current_date)
-next_work_day = current_date_dt + pd.offsets.BDay(1)
+next_work_day = utils.get_next_workday(current_date_dt)
 # 判断输入的日期是否是周末或大于下一个工作日
 if pred_date.weekday() in [5, 6] or pd.to_datetime(pred_date) > next_work_day:
     st.write(f'你选择的日期是周末或大于下一个工作日({next_work_day.date()}), 暂不支持预测！')
@@ -106,7 +106,6 @@ if button:
     # 预测数据准备，取build_data数据
     if pd.to_datetime(pred_date) == next_work_day:
         pred_date_row = build_data_src[build_data_src.index.strftime("%Y-%m-%d") == last_work_day]
-        # st.dataframe(pred_date_row)
     else:
         pred_date_row = build_data[build_data.index.strftime("%Y-%m-%d") == pred_date]
 
@@ -124,7 +123,7 @@ if button:
     # base_row = target_data[target_data.index.strftime("%Y-%m-%d") == pred_date]
     # pred_date_row = utils.build_data(ticker,base_row,'tmp')
     # st.dataframe(base_row)
-    # st.dataframe(pred_date_row)
+    st.dataframe(pred_date_row)
     # exit()
 
     target_data_row = target_data[target_data.index.strftime("%Y-%m-%d") == pred_date]
