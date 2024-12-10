@@ -55,23 +55,13 @@ def get_start_date(period):
         raise ValueError(f"未知的周期: {period}")
 
 
-ticker = st.text_input('请输入你要查询的股票代码')
+col1, col2 = st.columns(2)
+with col1:
+    ticker = st.text_input('请输入你要查询的股票代码')
+with col2:
+    # 设置按钮让用户选择按开始结束时间查或者直接选择范围
+    select_date_range = st.radio('选择查询日期范围', ('选择开始-结束日期', '直接选择范围'))
 
-# 如果还没输入代码，就直接显示所有股票代码
-if ticker == '':
-    st.write('你没有输入股票代码，请输入股票代码！')
-    exit()
-else:
-    ticker, stock_info = utils.get_ticker(ticker)
-    if ticker is None:
-        st.write('你输入的股票代码有误，请重新输入！')
-        exit()
-
-# 展示股票信息
-st.dataframe(stock_info)
-
-# 设置按钮让用户选择按开始结束时间查或者直接选择范围
-select_date_range = st.radio('选择查询日期范围', ('选择开始-结束日期', '直接选择范围'))
 if select_date_range == '选择开始-结束日期':
     # 设置两列并排
     col1, col2 = st.columns(2)
@@ -90,7 +80,20 @@ else:
     start = get_start_date(select_period)
     end = current_date
 
-st.write(f'你选择的日期范围是{start}至{end}')
+# 如果还没输入代码，就直接显示所有股票代码
+if ticker == '':
+    st.write('你没有输入股票代码，请输入股票代码！')
+    exit()
+else:
+    ticker, stock_info = utils.get_ticker(ticker)
+    if ticker is None:
+        st.write('你输入的股票代码有误，请重新输入！')
+        exit()
+
+# 展示股票信息
+st.dataframe(stock_info)
+
+# st.write(f'你选择的日期范围是{start}至{end}')
 
 interval_list = {'1d': '日K', '1wk': '周K', '1mo': '月K', '5m': '5分钟', '15m': '15分钟', '30m': '30分钟', '60m': '60分钟'}
 
@@ -146,6 +149,11 @@ if button:
     #     with eval(f'col{i + 1}'):
     #         st.write(f'{interval_list.get(interval)}数据')
     #         st.dataframe(ticker_info_historical.get(f'range_{interval}'))
+
+    # 展示日数据
+    # 黑体标题
+    st.markdown('<h3 style="color:black;">查询结果展示：</h3>', unsafe_allow_html=True)
+    st.dataframe(ticker_info_historical.get('range_1d'))
 
     # 绘制K线条
     status_text.text('正在绘制K线图...')

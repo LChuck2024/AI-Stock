@@ -7,6 +7,7 @@ import pandas as pd
 
 stock_info_sh_df = st.session_state.stock_info_sh_df
 stock_info_sz_df = st.session_state.stock_info_sz_df
+current_date = st.session_state.current_date
 
 
 def get_ticker(ticker):
@@ -28,8 +29,8 @@ def get_ticker(ticker):
 
 def get_data(ticker, period='max', interval='1d'):
     # 如果文件已存在，则直接跳过
-    if os.path.exists(f'data/src/{ticker}_ticker_info_src.pkl') and joblib.load(f'data/src/{ticker}_ticker_info_src.pkl') is not None:
-        return joblib.load(f'data/src/{ticker}_ticker_info_src.pkl')
+    if os.path.exists(f'data/src/{ticker}_{current_date}.pkl') and joblib.load(f'data/src/{ticker}_{current_date}.pkl') is not None:
+        return joblib.load(f'data/src/{ticker}_{current_date}.pkl')
     # 获得个股数据
     print(f'正在获取【{ticker}】的全部历史行情信息...')
     ticker_info = yf.Ticker(ticker)
@@ -39,41 +40,45 @@ def get_data(ticker, period='max', interval='1d'):
     if not os.path.exists('data/src/'):
         os.makedirs('data/src/')
     # 保存文件
-    joblib.dump(ticker_info_src, f'data/src/{ticker}_ticker_info_src.pkl')
+    joblib.dump(ticker_info_src, f'data/src/{ticker}_{current_date}.pkl')
     return ticker_info_src
 
 
-def build_data(ticker, data, category='build'):
+def build_data(ticker, data, build_data_date, category='build'):
     build_col = [3, 5, 10, 15, 30, 60, 90, 120, 180, 240, 360, 480, 720]
+    print(f'正在构建【{ticker} {build_data_date}】的数据集...')
     # 如果文件已存在，则直接跳过
-    if os.path.exists(f'data/{category}/{ticker}_ticker_info_build.pkl') and joblib.load(f'data/{category}/{ticker}_ticker_info_build.pkl') is not None:
+    if category == 'build' and os.path.exists(f'data/build/{ticker}_{build_data_date}.pkl') and joblib.load(f'data/build/{ticker}_{build_data_date}.pkl') is not None:
         print('数据集已存在')
-        return joblib.load(f'data/build/{ticker}_ticker_info_build.pkl')
+        return joblib.load(f'data/build/{ticker}_{build_data_date}.pkl')
     # for i in (3, 5, 10, 15, 30, 60, 90, 120, 180, 240, 360, 480, 720):
     print('开始构建数据集')
     data_column = data.columns
+    output_data = data.copy()
     for i in build_col:
         print(f'生成{i}天列')
         for col in data_column:
             # print(f'生成{i}天列{col}平均数据...')
-            data[f'{col}_avg_{i}'] = data[col].rolling(i).mean()
+            output_data[f'{col}_avg_{i}'] = data[col].rolling(i).mean()
             # print(f'生成{i}天列{col}最大数据...')
-            data[f'{col}_max_{i}'] = data[col].rolling(i).max()
+            output_data[f'{col}_max_{i}'] = data[col].rolling(i).max()
             # print(f'生成{i}天列{col}最小数据...')
-            data[f'{col}_min_{i}'] = data[col].rolling(i).min()
+            output_data[f'{col}_min_{i}'] = data[col].rolling(i).min()
             # print(f'生成{i}天列{col}方差数据...')
-            data[f'{col}_std_{i}'] = data[col].rolling(i).std()
+            output_data[f'{col}_std_{i}'] = data[col].rolling(i).std()
             # print(f'生成{i}天列{col}中位数数据...')
-            data[f'{col}_median_{i}'] = data[col].rolling(i).median()
+            output_data[f'{col}_median_{i}'] = data[col].rolling(i).median()
     # 增加日期对应的星期列
-    data['trans_date'] = data.index.weekday
+    output_data['trans_date'] = data.index.weekday
     print('完成构建数据集')
     # 如果目录不存在则创建
     if not os.path.exists('data/build/'):
         os.makedirs('data/build/')
-    # 保存文件
-    joblib.dump(data, f'data/{category}/{ticker}_ticker_info_build.pkl')
-    return data
+
+    if category == 'build':
+        # 保存文件
+        joblib.dump(output_data, f'data/{category}/{ticker}_{build_data_date}.pkl')
+    return output_data
 
 
 def get_last_workday(date):

@@ -70,26 +70,16 @@ class mlClient(object):
         }
         self.column_names = ["model", "train_time", "pred_time", "mae", "mse", "mape", "rmse", "importances"]
 
-    def train(self, ticker, data, source_colunms, target_column, pred_date, re_train_path, selections=['DecisionTree']):
+    def train(self, ticker, X, y, pred_date, re_train_path, selections=['DecisionTree']):
 
         ticker_model_path = f'{models_path}/{re_train_path}/{ticker}'
-
+        print('*'*100)
+        target_column = y.columns[0]
+        print(target_column)
         if not os.path.exists(f'{ticker_model_path}/{target_column}_model_compare.pkl'):
             print(f'{ticker}模型比对数据不存在，开始训练...')
             model_compare = []
-            # 读取数据
-            tmp_data = data
-            # print(f'source_colunms:{source_colunms}')
-            # print(f'target_column:{target_column}')
 
-            # 数据转换
-            # print('数据转换')
-            # tmp_data = data_change(tmp_data)
-            # 构建数据样本
-            # 按照提供的列表取需要的数据
-
-            X = tmp_data[source_colunms]
-            y = tmp_data[target_column]
             print(f'预测数据集 -> X.shape:{X.shape},y.shape:{y.shape},selections:{selections}')
 
             # 数据拆分
@@ -166,13 +156,15 @@ class mlClient(object):
         # 覆盖新生成模型到保存目录
         if re_train_path == pred_date:
             print('覆盖新生成模型到保存目录')
-            shutil.copytree(f'{models_path}/{re_train_path}/{ticker}', f'{models_path}/saved/{ticker}')
+            shutil.rmtree(f'{models_path}/saved/{ticker}/')
+            shutil.copytree(f'{models_path}/{re_train_path}/{ticker}/', f'{models_path}/saved/{ticker}/')
 
         return df_model_compare
 
-    def predict(self, ticker, data, target_col, re_train_path, best_model):
-        [model, mu, sigma, _, _, _, _] = joblib.load(f'{models_path}/{re_train_path}/{ticker}/{target_col}_{best_model}.pkl')
-        data = (data - mu) / sigma
+    def predict(self, ticker, X, target_col, best_model):
+        print(X.shape)
+        [model, mu, sigma, _, _, _, _] = joblib.load(f'{models_path}/saved/{ticker}/{target_col}_{best_model}.pkl')
+        data = (X - mu) / sigma
         print('预测中！')
         # print(data)
         y_pred = model.predict(data)[0]
