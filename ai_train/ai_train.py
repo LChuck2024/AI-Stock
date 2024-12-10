@@ -162,10 +162,10 @@ class mlClient(object):
         return df_model_compare
 
     def predict(self, ticker, X, target_col, best_model):
-        print(X.shape)
+        # print(X.shape)
         [model, mu, sigma, _, _, _, _] = joblib.load(f'{models_path}/saved/{ticker}/{target_col}_{best_model}.pkl')
         data = (X - mu) / sigma
-        print('预测中！')
+        print(f'{target_col} 预测中！')
         # print(data)
         y_pred = model.predict(data)[0]
         # print(f'{target_col} : {y_pred}')
