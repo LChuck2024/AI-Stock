@@ -4,9 +4,16 @@ import yfinance as yf
 import plotly.graph_objects as go
 from ai_train import utils
 
-st.set_page_config(page_title='📈 个股行情', page_icon='📈', layout='wide')
+st.set_page_config(page_title='📈 个股行情', page_icon='📈', layout='wide', initial_sidebar_state="expanded")
 st.header('🔍 个股预测')
 st.sidebar.subheader("🔍 个股预测")
+
+st.markdown(
+    """<div style="background-color:#f5f5f5;padding:10px;">
+                <p style="color:#999999;">
+                “个股行情” 页面，为您呈现单只股票的核心数据盛宴。实时价格动态更新，搭配当日开盘、最高、最低及成交量详情，一目了然。多日历史走势图表，直观展现股价起伏脉络，助您精准把握个股短期波动与中期趋势，以数据为锚，稳立投资决策之舟。
+        </div>
+    """, unsafe_allow_html=True)
 
 # 当前日期
 current_date = datetime.datetime.now().strftime("%Y-%m-%d")

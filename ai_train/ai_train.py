@@ -165,7 +165,7 @@ class mlClient(object):
         # print(X.shape)
         [model, mu, sigma, _, _, _, _] = joblib.load(f'{models_path}/saved/{ticker}/{target_col}_{best_model}.pkl')
         data = (X - mu) / sigma
-        print(f'{target_col} 预测中！')
+        # print(f'{target_col} 预测中！')
         # print(data)
         y_pred = model.predict(data)[0]
         # print(f'{target_col} : {y_pred}')

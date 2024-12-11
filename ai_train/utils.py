@@ -28,14 +28,21 @@ def get_ticker(ticker):
 
 
 def get_data(ticker, period='max', interval='1d'):
+    # 获得个股数据
+    print(f'正在获取【{ticker} {current_date}】的全部历史行情信息...')
     # 如果文件已存在，则直接跳过
     if os.path.exists(f'data/src/{ticker}_{current_date}.pkl') and joblib.load(f'data/src/{ticker}_{current_date}.pkl') is not None:
-        return joblib.load(f'data/src/{ticker}_{current_date}.pkl')
-    # 获得个股数据
-    print(f'正在获取【{ticker}】的全部历史行情信息...')
+        print(f'{ticker} {current_date}行情信息已存在，直接读取文件!')
+        ticker_info_src = joblib.load(f'data/src/{ticker}_{current_date}.pkl')
+        # print(ticker_info_src)
+        return ticker_info_src
+    print('未检测到文件，正在重新获取...')
     ticker_info = yf.Ticker(ticker)
     ticker_info_src = ticker_info.history(period=period, interval=interval)
-    ticker_info_src = ticker_info_src.drop(columns=['Dividends', 'Stock Splits'])
+    try:
+        ticker_info_src = ticker_info_src.drop(columns=['Dividends', 'Stock Splits'])
+    except Exception as e:
+        print(f'没有获取到 dividends 和 stock splits,{e}')
     # 如果目录不存在则创建
     if not os.path.exists('data/src/'):
         os.makedirs('data/src/')
@@ -51,26 +58,28 @@ def build_data(ticker, data, build_data_date, category='build'):
     if category == 'build' and os.path.exists(f'data/build/{ticker}_{build_data_date}.pkl') and joblib.load(f'data/build/{ticker}_{build_data_date}.pkl') is not None:
         print('数据集已存在')
         return joblib.load(f'data/build/{ticker}_{build_data_date}.pkl')
-    # for i in (3, 5, 10, 15, 30, 60, 90, 120, 180, 240, 360, 480, 720):
+
     print('开始构建数据集')
     data_column = data.columns
     output_data = data.copy()
+
+    new_columns = {}
     for i in build_col:
-        print(f'生成{i}天列')
+        # print(f'生成{i}天列')
         for col in data_column:
-            # print(f'生成{i}天列{col}平均数据...')
-            output_data[f'{col}_avg_{i}'] = data[col].rolling(i).mean()
-            # print(f'生成{i}天列{col}最大数据...')
-            output_data[f'{col}_max_{i}'] = data[col].rolling(i).max()
-            # print(f'生成{i}天列{col}最小数据...')
-            output_data[f'{col}_min_{i}'] = data[col].rolling(i).min()
-            # print(f'生成{i}天列{col}方差数据...')
-            output_data[f'{col}_std_{i}'] = data[col].rolling(i).std()
-            # print(f'生成{i}天列{col}中位数数据...')
-            output_data[f'{col}_median_{i}'] = data[col].rolling(i).median()
+            new_columns[f'{col}_avg_{i}'] = data[col].rolling(i).mean()
+            new_columns[f'{col}_max_{i}'] = data[col].rolling(i).max()
+            new_columns[f'{col}_min_{i}'] = data[col].rolling(i).min()
+            new_columns[f'{col}_std_{i}'] = data[col].rolling(i).std()
+            new_columns[f'{col}_median_{i}'] = data[col].rolling(i).median()
+
+    # 使用 pd.concat 一次性合并所有新列
+    new_df = pd.DataFrame(new_columns)
+    output_data = pd.concat([output_data, new_df], axis=1)
+
     # 增加日期对应的星期列
     output_data['trans_date'] = data.index.weekday
-    print('完成构建数据集')
+    # print('完成构建数据集')
     # 如果目录不存在则创建
     if not os.path.exists('data/build/'):
         os.makedirs('data/build/')
