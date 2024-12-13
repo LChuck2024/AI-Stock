@@ -4,24 +4,25 @@ import streamlit as st
 import yfinance as yf
 import os
 import pandas as pd
+import requests
 
 stock_info_sh_df = st.session_state.stock_info_sh_df
 stock_info_sz_df = st.session_state.stock_info_sz_df
-current_date = st.session_state.current_date
+current_date = st.session_state.current_date.strftime("%Y-%m-%d")
 
 
-def get_ticker(ticker):
+def get_ticker(ticker, source='yinance'):
     stock_info = None
     if ticker in stock_info_sh_df['证券代码'].to_list():
         stock_info = stock_info_sh_df[stock_info_sh_df['证券代码'] == ticker]
         print(stock_info)
         stock_info = stock_info.reset_index(drop=True)
-        ticker = ticker + '.SS'
+        ticker = ticker + '.SS' if source == 'yinance' else 'sh' + ticker
     elif ticker in stock_info_sz_df['A股代码'].to_list():
         stock_info = stock_info_sz_df[stock_info_sz_df['A股代码'] == ticker]
         print(stock_info)
         stock_info = stock_info.reset_index(drop=True)
-        ticker = ticker + '.SZ'
+        ticker = ticker + '.SZ' if source == 'yinance' else 'sz' + ticker
     else:
         ticker = None
     return ticker, stock_info
@@ -37,27 +38,53 @@ def get_all_tickers(channel, division):
 
 def get_data(ticker, period='max', interval='1d'):
     # 获得个股数据
-    print(f'正在获取【{ticker} {current_date}】的全部历史行情信息...')
+    print(f'[yfinance]正在获取【{ticker} {current_date}】的全部历史行情信息...')
     # 如果文件已存在，则直接跳过
-    if os.path.exists(f'data/src/{ticker}_{current_date}.pkl') and joblib.load(f'data/src/{ticker}_{current_date}.pkl') is not None:
+    if os.path.exists(f'data/src/yfinance/{ticker}_{current_date}.pkl') and joblib.load(f'data/src/yfinance/{ticker}_{current_date}.pkl') is not None:
         print(f'{ticker} {current_date}行情信息已存在，直接读取文件!')
-        ticker_info_src = joblib.load(f'data/src/{ticker}_{current_date}.pkl')
+        ticker_info_src = joblib.load(f'data/src/yfinance/{ticker}_{current_date}.pkl')
         print(ticker_info_src.shape)
         return ticker_info_src
     print(f'未检测到文件，正在重新获取【{ticker} {current_date}】的全部历史行情...')
     ticker_info = yf.Ticker(ticker)
     ticker_info_src = ticker_info.history(period=period, interval=interval)
-    try:
-        ticker_info_src = ticker_info_src.drop(columns=['Dividends', 'Stock Splits'])
-    except Exception as e:
-        print(f'没有获取到 dividends 和 stock splits,{e}')
+    # try:
+    #     ticker_info_src = ticker_info_src.drop(columns=['Dividends', 'Stock Splits'])
+    # except Exception as e:
+    #     print(f'没有获取到 dividends 和 stock splits,{e}')
     # 如果目录不存在则创建
-    if not os.path.exists('data/src/'):
-        os.makedirs('data/src/')
+    if not os.path.exists('data/src/yfinance/'):
+        os.makedirs('data/src/yfinance/')
     # 保存文件
     print(f'获取完成{ticker_info_src.shape}')
-    joblib.dump(ticker_info_src, f'data/src/{ticker}_{current_date}.pkl')
+    joblib.dump(ticker_info_src, f'data/src/yfinance/{ticker}_{current_date}.pkl')
     return ticker_info_src
+
+
+def get_data_sina(ticker):
+    # 获得个股数据
+    print(f'[sina]正在获取【{ticker} {current_date}】的全部历史行情信息...')
+    # 如果文件已存在，则直接跳过
+    if os.path.exists(f'data/src/sina/{ticker}_{current_date}.pkl') and joblib.load(f'data/src/sina/{ticker}_{current_date}.pkl') is not None:
+        print(f'{ticker} {current_date}行情信息已存在，直接读取文件!')
+        ticker_info_src = joblib.load(f'data/src/sina/{ticker}_{current_date}.pkl')
+        print(ticker_info_src.shape)
+        return ticker_info_src
+    print(f'未检测到文件，正在重新获取【{ticker} {current_date}】的全部历史行情...')
+    ticker_info = ak.stock_zh_a_daily(symbol=ticker)
+    print(ticker_info.shape)
+    # 将date字段转为index,并命名为Date
+    ticker_info.index = pd.to_datetime(ticker_info['date'])
+    ticker_info = ticker_info.rename(index={'date': 'Date'})
+    ticker_info = ticker_info.drop(columns=['date'])
+    # print(ticker_info.index)
+    # 如果目录不存在则创建
+    if not os.path.exists('data/src/sina/'):
+        os.makedirs('data/src/sina/')
+    # 保存文件
+    print(f'获取完成{ticker_info.shape}')
+    joblib.dump(ticker_info, f'data/src/sina/{ticker}_{current_date}.pkl')
+    return ticker_info
 
 
 def build_data(ticker, data, build_data_date, category='build'):
@@ -107,3 +134,20 @@ def get_last_workday(date):
 def get_next_workday(date):
     """获取指定日期的下一个工作日"""
     return date + pd.offsets.BDay(1)
+
+
+
+def check_google_connectivity():
+    try:
+        response = requests.get('https://www.google.com', timeout=5)
+        if response.status_code == 200:
+            print("网络可以连通谷歌网站")
+            return True
+        else:
+            print(f"无法连通谷歌网站，状态码: {response.status_code}")
+            return False
+    except requests.exceptions.RequestException as e:
+        print(f"无法连通谷歌网站，错误信息: {e}")
+        return False
+
+check_google_connectivity()

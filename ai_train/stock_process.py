@@ -2,6 +2,10 @@ import pandas as pd
 from ai_train import utils
 from ai_train import ai_train
 from datetime import timedelta
+import streamlit as st
+
+# 判断网络环境
+google_connectivity = st.session_state.google_connectivity
 
 
 class single_stock_prediction:
@@ -14,9 +18,11 @@ class single_stock_prediction:
         self.re_train_path = re_train_path
         # 评估指标
         self.kpi = kpi
+        # 验证网络是否能连通谷歌网站
+        # google_connectivity = utils.check_google_connectivity()
         # 获得个股数据
-        self.ticker_history = utils.get_data(ticker)
-        # print(self.ticker_history)
+        self.ticker_history = utils.get_data(ticker) if google_connectivity else utils.get_data_sina(ticker)
+        print(self.ticker_history)
         # 个股行情最大日期
         self.ticker_max_date = (self.ticker_history.index[-1]).strftime("%Y-%m-%d")
         # 个股行情最小日期

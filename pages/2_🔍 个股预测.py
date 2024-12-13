@@ -31,6 +31,9 @@ current_date = st.session_state.current_date
 stock_info_sh_df = st.session_state.stock_info_sh_df
 stock_info_sz_df = st.session_state.stock_info_sz_df
 stock_info = None
+# 判断网络环境
+google_connectivity = st.session_state.google_connectivity
+source = 'yinance' if google_connectivity else 'sina'
 col1, col2, col3, col4 = st.columns(4)
 
 with col1:
@@ -39,7 +42,7 @@ with col1:
 if ticker == '':
     st.write('你没有输入股票代码，请输入股票代码！')
 else:
-    ticker, stock_info = utils.get_ticker(ticker)
+    ticker, stock_info = utils.get_ticker(ticker, source)
     if ticker is None:
         st.write('你输入的股票代码有误，请重新输入！')
         exit()
@@ -133,7 +136,12 @@ if button:
     st.markdown('<h3 style="color:black;">预测记录：</h3>', unsafe_allow_html=True)
     st.dataframe(final_pred)
 
-    ticker_history_future = ticker_history_new[ticker_history_new.index.strftime("%Y-%m-%d") >= ssp.ticker_max_date]
+    # 确保 ticker_history_new 的索引是 DatetimeIndex 并且是 UTC 时区
+    ticker_history_new.index = pd.to_datetime(ticker_history_new.index).tz_convert('UTC')
+    # 确保 ssp.ticker_max_date 是 UTC 时区的时间戳
+    ssp.ticker_max_date = pd.to_datetime(ssp.ticker_max_date).tz_localize('UTC')
+    # 进行比较
+    ticker_history_future = ticker_history_new[ticker_history_new.index >= ssp.ticker_max_date]
     # st.dataframe(ticker_history_future)
     # 创建一个新的 fig 对象
     fig = go.Figure(data=[go.Candlestick(x=ticker_history_future.index,
@@ -155,4 +163,3 @@ if button:
     fig2.add_vline(x=ticker_history_future.index[0], line_width=1, line_dash="dash", line_color="black")
     # 在 Streamlit 中显示 fig
     st.plotly_chart(fig2)
-

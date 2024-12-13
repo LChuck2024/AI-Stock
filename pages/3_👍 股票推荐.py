@@ -58,31 +58,38 @@ if pred_date_input.weekday() in [5, 6]:
 
 button = st.button('开始推荐')
 if button:
-    stock_info = utils.get_all_tickers(channel_input, division_input)
-    # ticker_list = stock_info[index_name].tolist()
-    ticker_list = ['600999', '600998', '600997', '600996']
+    stock_infos = utils.get_all_tickers(channel_input, division_input)
+    # ticker_list = stock_infos[index_name].tolist()
+    # ticker_list = ['600999', '600998', '600997', '600996']
+    # st.write(stock_infos.iterrows())
     ticker_pred_dict = {}  # {'600999': {'2024-12-14':['','','',''] ,'2024-12-15':['','','',''] }
-    for ticker_code in ticker_list:
+    for stock_info in stock_infos.head(3).iterrows():
+        # 获取股票代码
+        ticker_code, ticker_name = stock_info[1]['证券代码'], stock_info[1]['证券简称']
+        st.write(ticker_code, ticker_name)
         # 转换为股票代码
-        ticker, stock_info = utils.get_ticker(ticker_code)
-        # 实例化单个股票预测类
-        ssp = stock_process.single_stock_prediction(ticker, pred_date_str, 'saved', kpi_input)
-        # 训练模型
-        [col_models, kpis] = ssp.single_train()
-        # 预测数据
-        [final_pred, col_pred, ticker_history_new] = ssp.single_pred()
-        # 存储预测结果
-        ticker_pred_dict[ticker] = {pred_date_str: final_pred}
+        ticker, stock_info = utils.get_ticker(ticker_code, source='sina')
+        st.write(ticker)
+        st.dataframe(stock_info)
 
-        ticker_history_future = ticker_history_new #[ticker_history_new.index.strftime("%Y-%m-%d") >= ssp.ticker_max_date]
-        # 绘制图表
-        fig = go.Figure(data=[go.Candlestick(x=ticker_history_future.index,
-                                             open=ticker_history_future['target_open'],
-                                             high=ticker_history_future['target_high'],
-                                             low=ticker_history_future['target_low'],
-                                             close=ticker_history_future['target_close'])])
-        fig.update_layout(title=f'{ticker} 股票价格走势', xaxis_title='日期', yaxis_title='价格')
-
-        # 显示当前预测结果和图表
-        st.dataframe(final_pred)
-        st.plotly_chart(fig)
+        # # 实例化单个股票预测类
+        # ssp = stock_process.single_stock_prediction(ticker, pred_date_str, 'saved', kpi_input)
+        # # 训练模型
+        # [col_models, kpis] = ssp.single_train()
+        # # 预测数据
+        # [final_pred, col_pred, ticker_history_new] = ssp.single_pred()
+        # # 存储预测结果
+        # ticker_pred_dict[ticker] = {pred_date_str: final_pred}
+        #
+        # ticker_history_future = ticker_history_new #[ticker_history_new.index.strftime("%Y-%m-%d") >= ssp.ticker_max_date]
+        # # 绘制图表
+        # fig = go.Figure(data=[go.Candlestick(x=ticker_history_future.index,
+        #                                      open=ticker_history_future['target_open'],
+        #                                      high=ticker_history_future['target_high'],
+        #                                      low=ticker_history_future['target_low'],
+        #                                      close=ticker_history_future['target_close'])])
+        # fig.update_layout(title=f'{ticker} 股票价格走势', xaxis_title='日期', yaxis_title='价格')
+        #
+        # # 显示当前预测结果和图表
+        # st.dataframe(final_pred)
+        # st.plotly_chart(fig)

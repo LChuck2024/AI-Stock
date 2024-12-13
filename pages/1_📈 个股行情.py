@@ -16,7 +16,7 @@ st.markdown(
     """, unsafe_allow_html=True)
 
 # 当前日期
-current_date = datetime.datetime.now().strftime("%Y-%m-%d")
+current_date_str = st.session_state.current_date.strftime("%Y-%m-%d")
 stock_info_sh_df = st.session_state.stock_info_sh_df
 stock_info_sz_df = st.session_state.stock_info_sz_df
 
@@ -85,7 +85,7 @@ else:
     select_period = period_dict.get(input_date)
     # input_date转换为开始结束日期
     start = get_start_date(select_period)
-    end = current_date
+    end = current_date_str
 
 # 如果还没输入代码，就直接显示所有股票代码
 if ticker == '':

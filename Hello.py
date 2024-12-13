@@ -3,6 +3,7 @@ import os
 import sys
 import akshare as ak
 import datetime
+from ai_train import utils
 
 # 设置页面配置
 st.set_page_config(page_title="🏠项目主页",
@@ -18,9 +19,10 @@ st.sidebar.subheader("🏠 项目主页")
 
 # 设置默认模型算法
 session_state = st.session_state
-st.session_state.current_date = datetime.datetime.now().strftime("%Y-%m-%d")
+st.session_state.current_date = datetime.datetime.now()
 st.session_state.model = 'LGBM'
 st.session_state.path = os.path.dirname(os.path.abspath(sys.argv[0]))
+st.session_state.google_connectivity = utils.check_google_connectivity()
 
 # a股
 st.session_state.stock_info_a_code_name_df = ak.stock_info_a_code_name()
