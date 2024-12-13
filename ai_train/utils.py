@@ -27,6 +27,14 @@ def get_ticker(ticker):
     return ticker, stock_info
 
 
+def get_all_tickers(channel, division):
+    if channel == '上证':
+        stock_info = ak.stock_info_sh_name_code(division)
+    else:
+        stock_info = ak.stock_info_sz_name_code(division)
+    return stock_info
+
+
 def get_data(ticker, period='max', interval='1d'):
     # 获得个股数据
     print(f'正在获取【{ticker} {current_date}】的全部历史行情信息...')
@@ -34,9 +42,9 @@ def get_data(ticker, period='max', interval='1d'):
     if os.path.exists(f'data/src/{ticker}_{current_date}.pkl') and joblib.load(f'data/src/{ticker}_{current_date}.pkl') is not None:
         print(f'{ticker} {current_date}行情信息已存在，直接读取文件!')
         ticker_info_src = joblib.load(f'data/src/{ticker}_{current_date}.pkl')
-        # print(ticker_info_src)
+        print(ticker_info_src.shape)
         return ticker_info_src
-    print('未检测到文件，正在重新获取...')
+    print(f'未检测到文件，正在重新获取【{ticker} {current_date}】的全部历史行情...')
     ticker_info = yf.Ticker(ticker)
     ticker_info_src = ticker_info.history(period=period, interval=interval)
     try:
@@ -47,6 +55,7 @@ def get_data(ticker, period='max', interval='1d'):
     if not os.path.exists('data/src/'):
         os.makedirs('data/src/')
     # 保存文件
+    print(f'获取完成{ticker_info_src.shape}')
     joblib.dump(ticker_info_src, f'data/src/{ticker}_{current_date}.pkl')
     return ticker_info_src
 

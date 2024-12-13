@@ -195,6 +195,9 @@ if button:
                 st.write(f'{interval_list.get(k)}数据绘制失败！')
                 continue
     progress_bar.progress(100)
-    status_text.text('查询成功！')
+    status_text.text('查询结束！')
+    st.write('整体市场行情：')
+    ticker_list = utils.get_all_tickers()
+    st.dataframe(ticker_list)
 # # 用open和close绘制一张条形图
 # st.bar_chart(ticker_info_historical[['Open', 'Close']])
